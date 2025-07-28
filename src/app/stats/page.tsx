@@ -1,4 +1,7 @@
-import Nav from "../layout/nav";
+import Nav from "../components/nav";
+import Card from "../components/card";
+import fictionImg from "../../../public/fiction.png";
+import { BookType, TagType } from '../types';
 
 export default async function Home() {
   const graphqlEndpoint = 'https://api.hardcover.app/v1/graphql';
@@ -20,9 +23,8 @@ export default async function Home() {
           id
           title
           pages
-          book_category_id
           cached_contributors
-          book_status_id
+          cached_image
           cached_tags
           rating
           release_date
@@ -33,7 +35,7 @@ export default async function Home() {
 
   const schemeQuery = `
   query {
-  __type(name: "books") {
+  __type(name: "user_books") {
     fields {
       name
     }
@@ -65,24 +67,58 @@ export default async function Home() {
 
   const books = data?.data?.list_books || [];
   const bookCount = books.length;
-  const pageCount = books.reduce((total, book) => total + (book.book?.pages || 0), 0);
+  const pageCount = books.reduce((total:number, book:BookType) => total + (book.book?.pages || 0), 0);
+  const longestBook = books.reduce((longest:BookType | null, book:BookType) => {
+    if (!longest || (book.book?.pages || 0) > (longest.book?.pages || 0)) {
+      return book;
+    }
+    return longest;
+  }, null);
+
+  const shortestBook = books.reduce((shortest:BookType | null, book:BookType) => {
+    if (!shortest || book.book?.pages != null || (book.book?.pages || 0) < (shortest.book?.pages || 0)) {
+      return book;
+    }
+    return shortest;
+  }, null);
+
   let genresArray:string[] = [];
-  books.forEach(book => {
+  books.forEach((book:BookType) => {
     if (book.book?.cached_tags?.Genre) {
-      book.book?.cached_tags?.Genre.forEach(genre => {
+      book.book?.cached_tags?.Genre.forEach((genre:TagType) => {
         if (!genresArray.includes(genre.tag)) {
           genresArray.push(genre.tag);
         }
       });
     }
   });
-  console.log('genere:', genresArray);
+
+  const genresObject = countGenres(books, genresArray);
+  
+  function countGenres(books: BookType[], genres: string[]) {
+    const genreCounts: { [key: string]: number } = {};
+    genres.forEach((genre) => {
+      let count = 0;
+      books.forEach((book:BookType) => {
+        const tags = book.book?.cached_tags?.Genre || [];
+        count += tags.filter((t:TagType) => t.tag === genre).length;
+      });
+      genreCounts[genre] = count;
+    });
+
+    return Object.entries(genreCounts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([tag, count]) => ({ tag, count }));
+  }
+
+  console.log('genresObject:', genresObject);
+
 
   return (
     <main className="font-sans">
       <Nav />
       <div className="p-8 flex flex-col items-center">
-        <h1 className="text-5xl text-center">Your stats</h1>
+        <h1 className="text-5xl text-center mb-6">Your stats</h1>
         <div className="stats shadow">
           <div className="stat place-items-center">
             <div className="stat-title">Pages read</div>
@@ -101,6 +137,24 @@ export default async function Home() {
             <div className="stat-value">{genresArray.length}</div>
             <div className="stat-desc">↘︎ 90 (14%)</div>
           </div>
+        </div>
+
+        <div className="flex flex-row gap-5 mt-12 mb-8 ">
+          <Card
+            title={longestBook.book.title}
+            imageUrl={longestBook.book.cached_image.url}
+            description={`Longest book with ${longestBook.book.pages} pages.`}
+          />
+          <Card
+            title={shortestBook.book.title}
+            imageUrl={shortestBook.book.cached_image.url}
+            description={`Shortest book with ${shortestBook.book.pages} pages.`}
+          />
+          <Card
+            title={genresObject[0]?.tag || 'No Genre'}
+            imageUrl={fictionImg.src}
+            description={`Your favourite genre is ${genresObject[0]?.tag || 'unknown'} with ${genresObject[0]?.count || 0} books.`}
+          />
         </div>
       </div>
     </main>
