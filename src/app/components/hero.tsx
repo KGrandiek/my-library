@@ -1,35 +1,40 @@
-interface author {
-    id: string;
-    name: string;
+interface AuthorType {
+    author: {
+      id: number,
+      slug: string,
+      name: string,
+    },
+    contribution: string | null
 }
 
-interface Book {
+interface BookType {
     id: string;
     title: string;
     cached_image: {
         url: string;
     };
-    cached_contributors: author[];
+    cached_contributors: AuthorType[];
 }
 
-interface CurrentReadingItem {
-    book: Book;
-    // Add other properties if needed
+interface CurrentReadingItemType {
+    book: BookType;
 }
 
 interface HeroProps {
-    currentReading: CurrentReadingItem[];
+    currentReading: CurrentReadingItemType[];
 }
 
-function AuthorString({ authors: author[] }) {
+function AuthorString(authors: AuthorType[]) {
     return (
         <span>
-            {authors.map((author, index) => (
-                <span key={author.id}>
-                    {author.name}
-                    {index < authors.length - 1 ? ', ' : ''}
-                </span>
-            ))}
+            {authors.map((author, index) =>
+                author.contribution === null && (
+                    <span key={author.author.id}>
+                        {index > 0 ? ', ' : ''}
+                        {author.author.name}
+                    </span>
+                )
+            )}
         </span>
     );
 }
