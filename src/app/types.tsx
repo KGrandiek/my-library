@@ -29,4 +29,8 @@ export interface BookType {
         rating?: number; // Optional, as not all books may have a rating
         release_date?: string; // Optional, as not all books may have a release date
     };
+    user_books?: {
+        last_read_date?: string | undefined; // Optional, as not all books may have a last read date
+        book_id?: string; // Optional, as not all books may have a book ID
+    }[];
 }

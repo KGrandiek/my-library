@@ -10,7 +10,7 @@ export default async function Home() {
       list_books(
         where: {
             user_books: {
-                user_id: {_eq: 40712}
+                user_id: {_eq: ${userId}}
                 status_id: {_eq: 1}
             }
         },

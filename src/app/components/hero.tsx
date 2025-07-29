@@ -20,7 +20,6 @@ function AuthorString(authors: AuthorType[]) {
 }
 
 export default function Hero({currentReading}: HeroProps) {
-    console.log('Current Reading:', currentReading[0]?.book.cached_contributors);
   return (
     <div
         className="hero min-h-screen"
